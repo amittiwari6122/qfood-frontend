@@ -105,7 +105,7 @@ function RegisterForm({ onSwitch }) {
     Object.entries(v).forEach(([k, val]) => val !== undefined && fd.append(k, String(val)));
     if (coords) { fd.append('lat', coords.lat); fd.append('lng', coords.lng); }
     if (avatar) fd.append('avatar', avatar);
-    try { const data = await signup(fd); if (data.devOtp) setDevOtp(data.devOtp); else nav('/app/profile?verify=1'); } catch (e) { setErr(errMsg(e)); }
+    try { const data = await signup(fd); if (data.devOtp) setDevOtp(data.devOtp); else nav('/app'); } catch (e) { setErr(errMsg(e)); }
   };
   if (devOtp) return (
     <div className="space-y-4 text-center">
