@@ -130,7 +130,7 @@ export function Profile() {
     <div className="grid gap-6 lg:grid-cols-2">
       <div className="space-y-6">
         <PageHeader title="Profile" />
-        {!user.phoneVerified && (
+        {false && (
           <Card className={params.get('verify') ? 'ring-2 ring-sky-300' : ''}>
             <h2 className="font-semibold">Verify your phone</h2>
             <p className="mt-1 text-sm text-ink-faint">{['DONOR', 'BENEFICIARY'].includes(user.role) ? 'Verifying your phone verifies your account.' : 'Required before admin verification.'}</p>
