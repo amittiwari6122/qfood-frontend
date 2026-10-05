@@ -3,7 +3,7 @@ import { io } from 'socket.io-client';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Bell, X } from 'lucide-react';
 import { useAuth } from './AuthContext';
-import { api } from '../lib/api';
+import { api, BACKEND_URL } from '../lib/api';
 
 const Ctx = createContext(null);
 export const useRealtime = () => useContext(Ctx);
@@ -26,7 +26,7 @@ export function RealtimeProvider({ children }) {
   useEffect(() => {
     if (!user) return undefined;
     api.get('/notifications').then(({ data }) => setNotifications(data)).catch(() => {});
-    const s = io({ auth: { token: localStorage.getItem('token') || sessionStorage.getItem('token') } });
+    const s = io(BACKEND_URL, { auth: { token: localStorage.getItem('token') || sessionStorage.getItem('token') }, transports: ['websocket', 'polling'] });
     s.on('notification', (n) => { setNotifications((p) => [n, ...p]); setRing((r) => r + 1); toast(n.title, n.body); });
     s.on('presence', ({ userId, online: on }) => setOnline((p) => { const x = new Set(p); on ? x.add(userId) : x.delete(userId); return x; }));
     setSocket(s);

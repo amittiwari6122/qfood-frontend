@@ -3,7 +3,7 @@ import { initReactI18next } from 'react-i18next';
 
 const resources = {
   en: { t: {
-    overview: 'Overview', donate: 'Donate food', myDonations: 'My donations', requests: 'Food requests', available: 'Available food',
+    overview: 'Overview', wasteMgmt: 'Waste management', donate: 'Donate food', myDonations: 'My donations', requests: 'Food requests', available: 'Available food',
     matches: 'Quantum matches', quantum: 'Quantum engine', deliveries: 'Deliveries', chat: 'Chat', notifications: 'Notifications',
     feedback: 'Feedback', analytics: 'Analytics', admin: 'Verification', market: 'Food deals', profile: 'Profile', logout: 'Sign out',
     usableFor: 'Usable for', expired: 'Expired', accept: 'Accept', reject: 'Decline', heroTitle: 'Turning Surplus Food Into Shared Hope',

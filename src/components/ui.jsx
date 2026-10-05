@@ -20,7 +20,7 @@ const STATUS_TONE = {
   EXPIRED: 'red', CANCELLED: 'gray', REJECTED: 'red', SAFE: 'green', CAUTION: 'amber', UNSAFE: 'red', MANUAL_REVIEW: 'amber', NOT_ANALYZED: 'gray',
   OPEN: 'sky', PARTIALLY_FULFILLED: 'cyan', FULFILLED: 'green', AWAITING_PARTNER: 'amber', ASSIGNED: 'sky', FAILED: 'red', PROPOSED: 'violet',
   VERIFIED: 'green', PENDING: 'amber', REVIEW_REQUIRED: 'amber', SUSPENDED: 'red', BLOCKED: 'red', ACTIVE: 'green', success: 'green', no_feasible: 'amber', RUNNING: 'violet',
-  HIGH: 'amber', CRITICAL: 'red', NORMAL: 'gray',
+  COLLECTED: 'green', COMPOSTED: 'green', HIGH: 'amber', CRITICAL: 'red', NORMAL: 'gray',
 };
 export const StatusBadge = ({ status }) => <Badge tone={STATUS_TONE[status] || 'gray'} dot>{String(status || '').replace(/_/g, ' ').toLowerCase()}</Badge>;
 

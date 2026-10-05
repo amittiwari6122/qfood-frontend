@@ -12,6 +12,7 @@ import { Deliveries, Track } from './pages/Deliveries';
 import Chat from './pages/Chat';
 import { Notifications, Feedback, Market, Profile } from './pages/Misc';
 import { Admin, Analytics } from './pages/Admin';
+import Waste from './pages/Waste';
 
 function Guard({ roles, children }) {
   const { user, loading } = useAuth();
@@ -40,6 +41,7 @@ export default function App() {
         <Route path="chat" element={<Chat />} />
         <Route path="notifications" element={<Notifications />} />
         <Route path="feedback" element={<Feedback />} />
+        <Route path="waste" element={<Guard roles={['DONOR', 'WASTE_PARTNER', 'ADMIN']}><Waste /></Guard>} />
         <Route path="market" element={<Guard roles={['NGO', 'BENEFICIARY']}><Market /></Guard>} />
         <Route path="profile" element={<Profile />} />
         <Route path="admin" element={<Guard roles={['ADMIN']}><Admin /></Guard>} />

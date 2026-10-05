@@ -19,24 +19,34 @@ export default function Chat() {
   const end = useRef(null);
   const typingTimer = useRef(null);
 
-  useEffect(() => { api.get('/chat').then((r) => { setConvs(r.data); if (r.data[0]) setActive(r.data[0]); }); }, []);
   useEffect(() => {
-    if (!active || !socket) return undefined;
-    api.get(`/chat/${active._id}/messages`).then((r) => setMsgs(r.data));
+    const load = () => api.get('/chat').then((r) => { setConvs(r.data); setActive((a) => a || r.data[0] || null); }).catch(() => {});
+    load(); const t = setInterval(load, 10000); return () => clearInterval(t);
+  }, []);
+  const addMsg = (m) => setMsgs((p) => (p.some((x) => x._id === m._id) ? p : [...p, m]));
+  useEffect(() => {
+    if (!active) return undefined;
+    let alive = true;
+    const pull = () => api.get(`/chat/${active._id}/messages`).then((r) => { if (alive) setMsgs((p) => (r.data.length === p.length && r.data.at(-1)?._id === p.at(-1)?._id ? p : r.data)); }).catch(() => {});
+    setMsgs([]); pull();
+    const poll = setInterval(pull, 3000); // safety net if the live socket is down
+    if (!socket) return () => { alive = false; clearInterval(poll); };
     socket.emit('chat:join', active._id);
-    const onMsg = (m) => m.conversation === active._id && setMsgs((p) => [...p, m]);
+    const onMsg = (m) => m.conversation === active._id && addMsg(m);
     const onTyping = (t) => t.conversationId === active._id && setTyping(t.typing ? t.name : null);
-    socket.on('chat:message', onMsg); socket.on('chat:typing', onTyping);
-    return () => { socket.off('chat:message', onMsg); socket.off('chat:typing', onTyping); };
+    const rejoin = () => socket.emit('chat:join', active._id);
+    socket.on('chat:message', onMsg); socket.on('chat:typing', onTyping); socket.on('connect', rejoin);
+    return () => { alive = false; clearInterval(poll); socket.off('chat:message', onMsg); socket.off('chat:typing', onTyping); socket.off('connect', rejoin); };
   }, [active, socket]);
   useEffect(() => end.current?.scrollIntoView({ behavior: 'smooth' }), [msgs, typing]);
 
-  const send = (e) => {
+  const send = async (e) => {
     e.preventDefault();
-    if (!text.trim()) return;
-    socket.emit('chat:send', { conversationId: active._id, text });
-    socket.emit('chat:typing', { conversationId: active._id, typing: false });
+    const t = text.trim();
+    if (!t || !active) return;
     setText('');
+    socket?.emit('chat:typing', { conversationId: active._id, typing: false });
+    try { const { data } = await api.post(`/chat/${active._id}/messages`, { text: t }); addMsg(data); } catch { setText(t); }
   };
   const onType = (v) => {
     setText(v);

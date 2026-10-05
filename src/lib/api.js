@@ -1,5 +1,7 @@
 import axios from 'axios';
 
+// Sockets can't go through the static-site rewrite, so they connect to the backend directly.
+export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || (import.meta.env.PROD ? 'https://qfood-api.onrender.com' : undefined);
 export const api = axios.create({ baseURL: '/api' });
 api.interceptors.request.use((cfg) => {
   const t = localStorage.getItem('token') || sessionStorage.getItem('token');

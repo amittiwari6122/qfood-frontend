@@ -4,14 +4,14 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Mail, Lock, Eye, EyeOff, Store, HeartHandshake, User, Bike, LocateFixed, Soup, ArrowLeft } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Store, HeartHandshake, User, Bike, Recycle, LocateFixed, Soup, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { api, errMsg } from '../lib/api';
 import FlowGraphic from '../components/FlowGraphic';
 import FoodParticles from '../components/FoodParticles';
 import { Field, Spinner } from '../components/ui';
 
-const ROLES = [['DONOR', 'Food donor', Store], ['NGO', 'NGO', HeartHandshake], ['BENEFICIARY', 'Individual in need', User], ['DELIVERY', 'Delivery partner', Bike]];
+const ROLES = [['DONOR', 'Food donor', Store], ['NGO', 'NGO', HeartHandshake], ['BENEFICIARY', 'Individual in need', User], ['DELIVERY', 'Delivery partner', Bike], ['WASTE_PARTNER', 'Waste management partner', Recycle]];
 
 const loginSchema = z.object({ email: z.string().email('Enter a valid email'), password: z.string().min(1, 'Enter your password'), remember: z.boolean().optional() });
 const regSchema = z.object({
@@ -22,7 +22,7 @@ const regSchema = z.object({
   confirmPassword: z.string(),
   address: z.string().min(3, 'Enter your address'),
   city: z.string().min(2, 'Enter your city'),
-  role: z.enum(['DONOR', 'NGO', 'BENEFICIARY', 'DELIVERY'], { errorMap: () => ({ message: 'Choose a role' }) }),
+  role: z.enum(['DONOR', 'NGO', 'BENEFICIARY', 'DELIVERY', 'WASTE_PARTNER'], { errorMap: () => ({ message: 'Choose a role' }) }),
   organizationName: z.string().optional(), registrationNumber: z.string().optional(),
   acceptTerms: z.literal(true, { errorMap: () => ({ message: 'Accept the terms to continue' }) }),
 }).refine((v) => v.password === v.confirmPassword, { path: ['confirmPassword'], message: 'Passwords do not match' })

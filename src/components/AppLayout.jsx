@@ -2,19 +2,20 @@ import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, PackagePlus, Package, ClipboardList, Atom, Truck, MessageCircle, Bell, Star, BarChart3, ShieldCheck, ShoppingBag, UserRound, LogOut, Menu, X, Soup, Sparkles } from 'lucide-react';
+import { LayoutDashboard, PackagePlus, Package, ClipboardList, Atom, Truck, MessageCircle, Bell, Star, BarChart3, ShieldCheck, ShoppingBag, UserRound, LogOut, Menu, X, Soup, Sparkles, Recycle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useRealtime } from '../context/RealtimeContext';
 import i18n from '../i18n';
 
 const NAV = {
-  DONOR: [['', 'overview', LayoutDashboard], ['donate', 'donate', PackagePlus], ['donations', 'myDonations', Package], ['quantum', 'quantum', Atom], ['deliveries', 'deliveries', Truck], ['chat', 'chat', MessageCircle], ['feedback', 'feedback', Star]],
+  DONOR: [['', 'overview', LayoutDashboard], ['donate', 'donate', PackagePlus], ['donations', 'myDonations', Package], ['quantum', 'quantum', Atom], ['deliveries', 'deliveries', Truck], ['waste', 'wasteMgmt', Recycle], ['chat', 'chat', MessageCircle], ['feedback', 'feedback', Star]],
   NGO: [['', 'overview', LayoutDashboard], ['requests', 'requests', ClipboardList], ['available', 'available', Soup], ['matches', 'matches', Sparkles], ['quantum', 'quantum', Atom], ['deliveries', 'deliveries', Truck], ['chat', 'chat', MessageCircle], ['market', 'market', ShoppingBag], ['feedback', 'feedback', Star]],
   BENEFICIARY: [['', 'overview', LayoutDashboard], ['requests', 'requests', ClipboardList], ['available', 'available', Soup], ['matches', 'matches', Sparkles], ['market', 'market', ShoppingBag], ['deliveries', 'deliveries', Truck], ['chat', 'chat', MessageCircle], ['feedback', 'feedback', Star]],
   DELIVERY: [['', 'overview', LayoutDashboard], ['deliveries', 'deliveries', Truck], ['chat', 'chat', MessageCircle], ['feedback', 'feedback', Star]],
-  ADMIN: [['', 'overview', LayoutDashboard], ['admin', 'admin', ShieldCheck], ['quantum', 'quantum', Atom], ['analytics', 'analytics', BarChart3], ['deliveries', 'deliveries', Truck]],
+  WASTE_PARTNER: [['', 'overview', LayoutDashboard], ['waste', 'wasteMgmt', Recycle]],
+  ADMIN: [['', 'overview', LayoutDashboard], ['admin', 'admin', ShieldCheck], ['quantum', 'quantum', Atom], ['analytics', 'analytics', BarChart3], ['deliveries', 'deliveries', Truck], ['waste', 'wasteMgmt', Recycle]],
 };
-const ROLE_LABEL = { DONOR: 'Food donor', NGO: 'NGO', BENEFICIARY: 'Beneficiary', DELIVERY: 'Delivery partner', ADMIN: 'Admin' };
+const ROLE_LABEL = { DONOR: 'Food donor', NGO: 'NGO', BENEFICIARY: 'Beneficiary', DELIVERY: 'Delivery partner', WASTE_PARTNER: 'Waste partner', ADMIN: 'Admin' };
 
 export default function AppLayout() {
   const { user, logout } = useAuth();

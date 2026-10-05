@@ -15,6 +15,7 @@ export default function Dashboard() {
     if (user.role === 'DONOR') api.get('/donations/mine').then((r) => setList(r.data.slice(0, 5)));
     if (['NGO', 'BENEFICIARY'].includes(user.role)) api.get('/quantum/matches').then((r) => setList(r.data.slice(0, 5)));
     if (user.role === 'DELIVERY') api.get('/deliveries').then((r) => setList(r.data.slice(0, 5)));
+    if (user.role === 'WASTE_PARTNER') api.get('/waste').then((r) => setList(r.data));
     api.get('/analytics/system').then((r) => setSys(r.data)).catch(() => {});
   }, [user.role]);
 
@@ -23,6 +24,7 @@ export default function Dashboard() {
     NGO: [[ClipboardList, 'Open requests', s.openRequests], [Truck, 'Active deliveries', s.activeDeliveries, 'violet'], [CheckCircle2, 'Received', s.received, 'green'], [Inbox, 'Requests fulfilled', s.fulfilled, 'green']],
     BENEFICIARY: [[ClipboardList, 'Open requests', s.openRequests], [Truck, 'On the way', s.activeDeliveries, 'violet'], [CheckCircle2, 'Received', s.received, 'green']],
     DELIVERY: [[Truck, 'Active', s.active], [CheckCircle2, 'Delivered', s.delivered, 'green'], [Route, 'Distance covered', s.km, 'sky', ' km'], [AlertTriangle, 'Failed', s.failed, 'red']],
+    WASTE_PARTNER: [[Package, 'Waiting for pickup', list.filter((w) => w.status === 'PENDING').length, 'amber'], [Truck, 'My active pickups', list.filter((w) => w.status === 'ACCEPTED').length, 'violet'], [CheckCircle2, 'Collected', list.filter((w) => w.status === 'COLLECTED').length, 'green']],
     ADMIN: [[ShieldCheck, 'NGOs to verify', s.pendingNgos, 'amber'], [AlertTriangle, 'Donations to review', s.pendingReview, 'amber'], [CheckCircle2, 'Rescue rate', s.rescueRate, 'green', '%'], [Atom, 'Recent quantum runs', s.runs?.length, 'violet']],
   }[user.role];
 
@@ -31,10 +33,11 @@ export default function Dashboard() {
       <PageHeader title="Overview" sub="Your activity at a glance"
         actions={user.role === 'DONOR' ? <Link to="/app/donate" className="btn-primary">Donate food</Link>
           : ['NGO', 'BENEFICIARY'].includes(user.role) ? <Link to="/app/requests" className="btn-primary">Request food</Link>
-          : user.role === 'ADMIN' ? <Link to="/app/quantum" className="btn-quantum">Open quantum engine</Link> : null} />
+          : user.role === 'ADMIN' ? <Link to="/app/quantum" className="btn-quantum">Open quantum engine</Link>
+          : user.role === 'WASTE_PARTNER' ? <Link to="/app/waste" className="btn-primary">View pickups</Link> : null} />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{stats.map(([i, l, v, t, suf]) => <Stat key={l} icon={i} label={l} value={v} tone={t} suffix={suf} />)}</div>
 
-      {user.role !== 'ADMIN' && (
+      {!['ADMIN', 'WASTE_PARTNER'].includes(user.role) && (
         <Card className="mt-6">
           <h2 className="mb-4 font-semibold">{user.role === 'DONOR' ? 'Recent donations' : user.role === 'DELIVERY' ? 'Your deliveries' : 'Latest quantum matches'}</h2>
           {!list.length ? <Empty title="Nothing here yet">{user.role === 'DONOR' ? 'List your first surplus food to see it here.' : 'New activity will appear here in real time.'}</Empty> : (

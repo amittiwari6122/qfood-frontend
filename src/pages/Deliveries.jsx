@@ -79,14 +79,15 @@ export function Track() {
     setTrail(t.map((p) => [p.lat, p.lng]));
     if (t.length) setRider(t[t.length - 1]);
   }), [id]);
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(); const t = setInterval(load, 5000); return () => clearInterval(t); }, [load]); // polling keeps the map moving even if the socket is down
   useEffect(() => {
     if (!socket) return undefined;
     socket.emit('tracking:join', id);
     const onLoc = (p) => { if (p.deliveryId === id) { setRider(p); setTrail((t) => [...t, [p.lat, p.lng]]); } };
     const onUpd = (u) => { if (u.deliveryId === id) load(); };
-    socket.on('tracking:location', onLoc); socket.on('delivery:update', onUpd);
-    return () => { socket.off('tracking:location', onLoc); socket.off('delivery:update', onUpd); };
+    const rejoin = () => socket.emit('tracking:join', id);
+    socket.on('tracking:location', onLoc); socket.on('delivery:update', onUpd); socket.on('connect', rejoin);
+    return () => { socket.off('tracking:location', onLoc); socket.off('delivery:update', onUpd); socket.off('connect', rejoin); };
   }, [socket, id, load]);
   useEffect(() => () => watchRef.current && navigator.geolocation.clearWatch(watchRef.current), []);
 
@@ -99,10 +100,13 @@ export function Track() {
       { enableHighAccuracy: true, maximumAge: 5000 });
     setSharing(true);
   };
+  const self = async () => { try { await api.post(`/deliveries/${id}/self`); load(); } catch (e) { toast('Could not set this up', errMsg(e), 'error'); } };
   const act = async (path, body) => { try { await api.post(`/deliveries/${id}/${path}`, body); setCode(''); load(); } catch (e) { toast('Action failed', errMsg(e), 'error'); } };
 
   if (!d) return <Spinner />;
   const isPartner = d.partner?._id === user._id;
+  const isRecipient = d.recipient?._id === user._id;
+  const isDonor = !!d.pickupOtp; // only the donor is sent the pickup code
   const markers = [{ lat: d.pickup.lat, lng: d.pickup.lng, kind: 'pickup', label: 'Pickup' }, { lat: d.dropoff.lat, lng: d.dropoff.lng, kind: 'dropoff', label: 'Drop-off' }];
   if (rider) markers.push({ lat: rider.lat, lng: rider.lng, kind: 'rider', label: d.partner?.name });
 
@@ -125,11 +129,19 @@ export function Track() {
         </Card>
         {d.pickupOtp && ['AWAITING_PARTNER', 'ASSIGNED'].includes(d.status) && <Card className="bg-orange-50"><p className="flex items-center gap-2 text-sm font-medium"><KeyRound className="h-4 w-4 text-orange-500" />Pickup code — give this to the partner</p><p className="mt-2 text-3xl font-semibold tracking-[.4em]">{d.pickupOtp}</p></Card>}
         {d.dropoffOtp && d.status === 'IN_TRANSIT' && <Card className="bg-emerald-50"><p className="flex items-center gap-2 text-sm font-medium"><KeyRound className="h-4 w-4 text-emerald-600" />Delivery code — give this when food arrives</p><p className="mt-2 text-3xl font-semibold tracking-[.4em]">{d.dropoffOtp}</p></Card>}
+        {d.status === 'AWAITING_PARTNER' && (isRecipient || isDonor) && (
+          <Card className="space-y-2 bg-sky-50">
+            <p className="text-sm font-medium">Delivery partner is optional</p>
+            <p className="text-xs text-ink-soft">{isRecipient ? 'You can wait for a delivery partner, or collect the food yourself if you are free. Use the chat to agree with the donor.' : 'You can wait for a delivery partner, or take the food to the NGO yourself if you are free. Use the chat to agree with them.'}</p>
+            <button className="btn-primary w-full" onClick={self}>{isRecipient ? 'I will pick it up myself' : 'I will deliver it myself'}</button>
+          </Card>
+        )}
+        {d.mode && d.mode !== 'PARTNER' && <p className="text-xs text-ink-faint">{d.mode === 'RECIPIENT_PICKUP' ? 'Self pickup by the receiving NGO' : 'Self delivery by the donor'}</p>}
         {isPartner && ['ASSIGNED', 'IN_TRANSIT'].includes(d.status) && (
           <Card className="space-y-3">
             <button className={`btn w-full ${sharing ? 'bg-sky-500 text-white' : 'btn-outline'}`} onClick={share}><Navigation className={`h-4 w-4 ${sharing ? 'animate-pulse' : ''}`} />{sharing ? 'Sharing live location' : 'Share live location'}</button>
             <label className="block"><span className="label">{d.status === 'ASSIGNED' ? 'Pickup code from donor' : 'Delivery code from recipient'}</span>
-              <input className="input tracking-[.4em]" inputMode="numeric" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} /></label>
+              <input className="input tracking-[.4em]" inputMode="numeric" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))} /></label>
             <button className="btn-primary w-full" disabled={code.length !== 6} onClick={() => act(d.status === 'ASSIGNED' ? 'pickup' : 'deliver', { otp: code })}><PackageCheck className="h-4 w-4" />{d.status === 'ASSIGNED' ? 'Confirm pickup' : 'Confirm delivery'}</button>
             <button className="btn-ghost w-full text-rose-600" onClick={() => { const r = prompt('What went wrong?'); if (r) act('fail', { reason: r }); }}><AlertTriangle className="h-4 w-4" />Report a problem</button>
           </Card>
