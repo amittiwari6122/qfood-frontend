@@ -128,7 +128,6 @@ export default function QuantumEngine() {
       <PageHeader title="Quantum AI Matching Engine" sub="Donation–NGO matching formulated as a QUBO and solved with QAOA (Qiskit)."
         actions={['ADMIN', 'DONOR', 'NGO', 'BENEFICIARY'].includes(user.role) && <button className="btn-quantum" onClick={start} disabled={active}><Play className="h-4 w-4" />Run matching now</button>} />
 
-      {!health?.reachable && <p className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{health?.error || 'Quantum service offline.'} Start it with <code className="font-mono">uvicorn app:app --port 8001</code> in quantum-service/.</p>}
 
       <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {stat(Atom, 'Algorithm', 'QAOA', 'text-violet-600')}

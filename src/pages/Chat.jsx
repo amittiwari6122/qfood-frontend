@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Send, Languages } from 'lucide-react';
+import { Send, Languages, Truck } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { useRealtime } from '../context/RealtimeContext';
@@ -38,7 +39,7 @@ export default function Chat() {
     socket.on('chat:message', onMsg); socket.on('chat:typing', onTyping); socket.on('connect', rejoin);
     return () => { alive = false; clearInterval(poll); socket.off('chat:message', onMsg); socket.off('chat:typing', onTyping); socket.off('connect', rejoin); };
   }, [active, socket]);
-  useEffect(() => end.current?.scrollIntoView({ behavior: 'smooth' }), [msgs, typing]);
+  useEffect(() => end.current?.scrollIntoView?.({ behavior: 'smooth' }), [msgs, typing]);
 
   const send = async (e) => {
     e.preventDefault();
@@ -60,7 +61,9 @@ export default function Chat() {
   };
 
   if (!convs.length) return <><PageHeader title="Chat" /><Empty title="No conversations yet">A chat opens automatically between donor, NGO and delivery partner once a match is accepted.</Empty></>;
-  const others = (c) => c.participants.filter((p) => p._id !== user._id);
+  const others = (c) => (c?.participants || []).filter((p) => p && p._id !== user._id);
+  const ROLE = { DONOR: 'Donor', NGO: 'NGO', BENEFICIARY: 'Needy person', DELIVERY: 'Delivery partner', WASTE_PARTNER: 'Waste partner', ADMIN: 'Admin' };
+  const food = (c) => (c?.donation ? `${c.donation.foodName || 'Food'}${c.donation.quantity ? ` · ${c.donation.quantity} ${c.donation.unit || ''}` : ''}` : '');
 
   return (
     <div>
@@ -71,13 +74,20 @@ export default function Chat() {
             <li key={c._id}><button onClick={() => setActive(c)} className={`flex w-full items-center gap-3 px-4 py-3 text-left ${active?._id === c._id ? 'bg-sky-50' : 'hover:bg-sky-50/50'}`}>
               <span className="relative grid h-9 w-9 shrink-0 place-items-center rounded-full bg-sky-100 text-sm font-semibold text-sky-700">{others(c)[0]?.name?.[0]}
                 {others(c).some((p) => p.online || online.has(p._id)) && <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />}</span>
-              <span className="min-w-0 flex-1"><span className="block truncate text-sm font-medium">{others(c).map((p) => p.name).join(', ')}</span><span className="block truncate text-xs text-ink-faint">{c.donation?.foodName}</span></span>
+              <span className="min-w-0 flex-1"><span className="block truncate text-sm font-medium">{others(c).map((p) => p.name).join(', ')}</span><span className="block truncate text-xs text-ink-faint">{food(c)}</span></span>
               {c.unread > 0 && <span className="rounded-full bg-sky-500 px-1.5 text-[10px] text-white">{c.unread}</span>}
             </button></li>
           ))}
         </ul>
         <div className="flex min-h-0 flex-col">
-          <div className="border-b border-sky-100 px-4 py-3"><p className="font-medium">{active && others(active).map((p) => p.name).join(', ')}</p><p className="text-xs text-ink-faint">{active?.donation?.foodName}</p></div>
+          <div className="flex flex-wrap items-center gap-2 border-b border-sky-100 px-4 py-3">
+            <div className="min-w-0 flex-1">
+              <p className="font-medium">{others(active).map((p) => `${p.name} (${ROLE[p.role] || p.role})`).join(', ') || 'Conversation'}</p>
+              <p className="text-xs text-ink-faint">Food: {food(active) || '—'}{active?.delivery?.status ? ` · ${active.delivery.status.replace(/_/g, ' ').toLowerCase()}` : ''}</p>
+              {others(active).some((p) => p.phone) && <p className="text-xs text-ink-faint">Phone: {others(active).filter((p) => p.phone).map((p) => p.phone).join(', ')}</p>}
+            </div>
+            {active?.delivery?._id && <Link to={`/app/track/${active.delivery._id}`} className="btn-outline px-3 py-1.5 text-xs"><Truck className="h-3.5 w-3.5" />Open delivery</Link>}
+          </div>
           <div className="flex-1 space-y-2 overflow-y-auto p-4">
             <AnimatePresence initial={false}>
               {msgs.map((m) => {

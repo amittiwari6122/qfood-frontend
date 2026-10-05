@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Leaf, Drumstick, MapPin, Gauge, Clock, Atom, Check, X, Plus } from 'lucide-react';
 import { api, errMsg } from '../lib/api';
@@ -58,16 +58,32 @@ export function MyDonations() {
 }
 
 export function Available() {
+  const { user } = useAuth();
+  const { toast, socket } = useRealtime();
+  const nav = useNavigate();
   const [list, setList] = useState(null);
-  useEffect(() => { api.get('/donations/available').then((r) => setList(r.data)); }, []);
+  const [busy, setBusy] = useState(null);
+  const load = useCallback(() => api.get('/donations/available').then((r) => setList(r.data)).catch(() => setList((l) => l || [])), []);
+  useEffect(() => { load(); const t = setInterval(load, 10000); return () => clearInterval(t); }, [load]);
+  useEffect(() => { socket?.on('notification', load); return () => socket?.off('notification', load); }, [socket, load]);
+  const claim = async (d) => {
+    setBusy(d._id);
+    try { const { data } = await api.post(`/donations/${d._id}/claim`, {}); toast('Food is yours!', 'Arrange pickup: wait for a delivery partner, or collect it yourself.', 'success'); nav(`/app/track/${data.delivery._id}`); }
+    catch (e) { toast('Could not claim', errMsg(e), 'error'); load(); } finally { setBusy(null); }
+  };
   if (!list) return <Spinner />;
+  const canClaim = ['NGO', 'BENEFICIARY'].includes(user.role);
   return (
     <div>
-      <PageHeader title="Available food" sub="Food currently in the matching pool. The quantum engine assigns it — create a request so you're included." />
-      {!list.length ? <Empty title="No food available right now">New donations appear here as soon as they pass screening.</Empty> : (
+      <PageHeader title="Available food" sub="First come, first served. Claim food the moment it is listed, or let the quantum engine match it for you." />
+      {!list.length ? <Empty title="No food available right now">New donations appear here as soon as they are listed, and you get a notification.</Empty> : (
         <>
           <MapView height={300} markers={list.map((d) => ({ lat: d.location.coordinates[1], lng: d.location.coordinates[0], kind: 'pickup', label: `${d.foodName} · ${d.quantity} ${d.unit}` }))} />
-          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">{list.map((d) => <FoodCard key={d._id} d={d}><p className="text-xs text-ink-faint">From {d.donor?.name}, {d.donor?.city}</p></FoodCard>)}</div>
+          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">{list.map((d) => (
+            <FoodCard key={d._id} d={d}>
+              <p className="text-xs text-ink-faint">From {d.donor?.name}, {d.donor?.city}</p>
+              {canClaim && <button className="btn-primary w-full" disabled={busy === d._id} onClick={() => claim(d)}>{busy === d._id ? 'Claiming…' : 'Claim this food'}</button>}
+            </FoodCard>))}</div>
         </>
       )}
     </div>

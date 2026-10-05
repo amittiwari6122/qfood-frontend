@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
+import ErrorBoundary from './ErrorBoundary';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LayoutDashboard, PackagePlus, Package, ClipboardList, Atom, Truck, MessageCircle, Bell, Star, BarChart3, ShieldCheck, ShoppingBag, UserRound, LogOut, Menu, X, Soup, Sparkles, Recycle } from 'lucide-react';
@@ -22,6 +23,7 @@ export default function AppLayout() {
   const { notifications, ring } = useRealtime();
   const { t } = useTranslation();
   const nav = useNavigate();
+  const loc = useLocation();
   const [open, setOpen] = useState(false);
   const unread = notifications.filter((n) => !n.read).length;
   const items = [...NAV[user.role], ['notifications', 'notifications', Bell], ['profile', 'profile', UserRound]];
@@ -75,7 +77,7 @@ export default function AppLayout() {
             {user.avatarUrl ? <img src={user.avatarUrl} alt="" className="h-8 w-8 rounded-full object-cover" /> : <span className="grid h-8 w-8 place-items-center rounded-full bg-sky-100 text-xs font-semibold text-sky-700">{user.name[0]}</span>}
           </div>
         </header>
-        <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6"><Outlet /></main>
+        <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6"><ErrorBoundary resetKey={loc.pathname}><Outlet /></ErrorBoundary></main>
       </div>
     </div>
   );
